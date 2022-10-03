@@ -18,3 +18,5 @@ scenes/show-scene*
 *.blend[0-9]
 .vscode/
 maek-cache.json
+.DS_Store
+dist/***
