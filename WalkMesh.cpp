@@ -137,7 +137,6 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		step_coords = glm::vec3(0.0f);
 		glm::vec3 full_step = barycentric_weights(a, b, c,to_world_point(start) + step);
 		step_coords = full_step - start.weights;
-		assert(std::abs(step_coords.x + step_coords.y + step_coords.z) < eps);
 	}
 
 	//figure out which edge (if any) is crossed first.
@@ -183,7 +182,7 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	assert(rotation_);
 	auto &rotation = *rotation_;
 
-	assert(std::abs(start.weights.z) <= 0.000001); //*must* be on an edge.
+	assert(std::abs(start.weights.z) <= 0.0001); //*must* be on an edge.
 	glm::uvec2 edge =glm::uvec2(start.indices.y, start.indices.x);
 
 	//check if 'edge' is a non-boundary edge:
@@ -195,12 +194,10 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		end.indices = glm::vec3(edge.x, edge.y, it->second);
 		end.weights = barycentric_weights(vertices.at(edge.x), vertices.at(edge.y), vertices.at(it->second),to_world_point(start));
 		end.weights.z = 0.0f;
-		assert(std::abs(end.weights.z) < 0.001);
 
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
 		rotation = glm::rotation(to_world_triangle_normal(start), to_world_triangle_normal(end));
-		assert(std::abs(end.weights.x + end.weights.y + end.weights.z - 1.0) < 0.01 );
 
 		return true;
 	} else {
