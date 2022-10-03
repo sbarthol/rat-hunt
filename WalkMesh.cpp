@@ -4,6 +4,7 @@
 
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -166,6 +167,9 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 }
 
 bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
+	assert(start.weights.z == 0.0f);
+	assert(start.indices.x <= vertices.size() && start.indices.y <= vertices.size() && start.indices.z <= vertices.size());
+	
 	assert(end_);
 	auto &end = *end_;
 
@@ -173,17 +177,23 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	auto &rotation = *rotation_;
 
 	assert(start.weights.z == 0.0f); //*must* be on an edge.
-	glm::uvec2 edge = glm::uvec2(start.indices);
+	glm::uvec2 edge =glm::uvec2(start.indices.y, start.indices.x);
 
 	//check if 'edge' is a non-boundary edge:
-	if (edge.x == edge.y /* <-- TODO: use a real check, this is just here so code compiles */) {
+	auto it = next_vertex.find(edge);
+	if (it != next_vertex.end()) {
 		//it is!
 
 		//make 'end' represent the same (world) point, but on triangle (edge.y, edge.x, [other point]):
-		//TODO
+		end.indices = glm::vec3(edge.x, edge.y, it->second);
+		end.weights = barycentric_weights(vertices.at(edge.x), vertices.at(edge.y), vertices.at(it->second),to_world_point(start));
+		end.weights.z = 0.0f;
+		assert(std::abs(end.weights.z) < 0.001);
+
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
-		//TODO
+		rotation = glm::rotation(to_world_triangle_normal(start), to_world_triangle_normal(end));
+		assert(std::abs(end.weights.x + end.weights.y + end.weights.z - 1.0) < 0.001 );
 
 		return true;
 	} else {
