@@ -132,7 +132,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	glm::vec3 const &c = vertices[start.indices.z];
 
 	glm::vec3 step_coords;
-	const float eps = 0.0001;
+	const float eps = 0.001;
 	{ //project 'step' into a barycentric-coordinates direction:
 		step_coords = glm::vec3(0.0f);
 		glm::vec3 full_step = barycentric_weights(a, b, c,to_world_point(start) + step);
