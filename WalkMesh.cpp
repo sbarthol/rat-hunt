@@ -159,11 +159,16 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 
 	if(std::abs(end.weights.x) < eps) {
 		end.weights = glm::vec3(end.weights.y, end.weights.z, end.weights.x);
-		end.indices = glm::vec3(end.indices.y, end.indices.z, end.indices.x);
+		end.indices = glm::vec3(start.indices.y, start.indices.z, start.indices.x);
+		assert(end.indices.x < vertices.size());
 	}else if(std::abs(end.weights.y) < eps) {
 		end.weights = glm::vec3(end.weights.z, end.weights.x, end.weights.y);
-		end.indices = glm::vec3(end.indices.z, end.indices.x, end.indices.y);
+		end.indices = glm::vec3(start.indices.z, start.indices.x, start.indices.y);
+		assert(end.indices.x < vertices.size());
+	}else {
+		end.indices = start.indices;
 	}
+	assert(end.indices.x < vertices.size());
 }
 
 bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
