@@ -161,6 +161,7 @@ void PlayMode::update(float elapsed) {
 			float time;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
+			assert(player.at.indices.x < walkmesh->vertices.size());
 			if (time == 1.0f) {
 				//finished within triangle:
 				remain = glm::vec3(0.0f);
@@ -173,6 +174,7 @@ void PlayMode::update(float elapsed) {
 			if (walkmesh->cross_edge(player.at, &end, &rotation)) {
 				//stepped to a new triangle:
 				player.at = end;
+				assert(player.at.indices.x < walkmesh->vertices.size());
 				//rotate step to follow surface:
 				remain = rotation * remain;
 			} else {
@@ -201,6 +203,7 @@ void PlayMode::update(float elapsed) {
 		}
 
 		//update player's position to respect walking:
+		assert(player.at.indices.x < walkmesh->vertices.size());
 		player.transform->position = walkmesh->to_world_point(player.at);
 
 		{ //update player's rotation to respect local (smooth) up-vector:

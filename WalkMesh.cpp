@@ -132,7 +132,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	glm::vec3 const &c = vertices[start.indices.z];
 
 	glm::vec3 step_coords;
-	const float eps = 0.001;
+	const float eps = 0.01;
 	{ //project 'step' into a barycentric-coordinates direction:
 		step_coords = glm::vec3(0.0f);
 		glm::vec3 full_step = barycentric_weights(a, b, c,to_world_point(start) + step);
@@ -172,7 +172,6 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 }
 
 bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *rotation_) const {
-	assert(start.weights.z == 0.0f);
 	assert(start.indices.x <= vertices.size() && start.indices.y <= vertices.size() && start.indices.z <= vertices.size());
 	
 	assert(end_);
@@ -198,7 +197,7 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:
 		rotation = glm::rotation(to_world_triangle_normal(start), to_world_triangle_normal(end));
-		assert(std::abs(end.weights.x + end.weights.y + end.weights.z - 1.0) < 0.001 );
+		assert(std::abs(end.weights.x + end.weights.y + end.weights.z - 1.0) < 0.01 );
 
 		return true;
 	} else {
