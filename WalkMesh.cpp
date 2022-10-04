@@ -170,6 +170,10 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	}else {
 		end.indices = start.indices;
 	}
+	if(time < 1.0) {
+		end.weights.z = 0.0f;
+		end.weights /= end.weights.x + end.weights.y;
+	}
 	assert(end.indices.x < vertices.size());
 }
 
@@ -194,6 +198,7 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		end.indices = glm::vec3(edge.x, edge.y, it->second);
 		end.weights = barycentric_weights(vertices.at(edge.x), vertices.at(edge.y), vertices.at(it->second),to_world_point(start));
 		end.weights.z = 0.0f;
+		end.weights /= end.weights.x + end.weights.y;
 
 
 		//make 'rotation' the rotation that takes (start.indices)'s normal to (end.indices)'s normal:

@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("rat-hunt.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("rat-hunt.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -41,7 +41,7 @@ WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
 	// Used the following assets
 	// https://www.blenderkit.com/get-blenderkit/116e9087-3375-46a3-9062-e3b932993560/
-	WalkMeshes *ret = new WalkMeshes(data_path("rat-hunt.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
