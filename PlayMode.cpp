@@ -39,6 +39,8 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
+	// Used the following assets
+	// https://www.blenderkit.com/get-blenderkit/116e9087-3375-46a3-9062-e3b932993560/
 	WalkMeshes *ret = new WalkMeshes(data_path("rat-hunt.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
