@@ -28,13 +28,15 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
-	//player info:
-	struct Rat {
+	//rat info:
+	typedef struct {
 		glm::vec2 dir;
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
-	} rat;
+	} Rat;
+
+	std::vector<Rat> rats;
 
 	//player info:
 	struct Player {

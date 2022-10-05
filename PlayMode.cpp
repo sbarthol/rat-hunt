@@ -70,17 +70,39 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
 	// https://www.turbosquid.com/3d-models/maya-rat-games/611560#
+	Scene::Transform *rat_transform;
 	for (auto &transform : scene.transforms) {
 		if (transform.name == "Rat") {
-			rat.transform = &transform;
-			printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
-			printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
+			rat_transform = &transform;
 		}
-
 	}
-	rat.at = walkmesh->nearest_walk_point(rat.transform->position);
-	rat.transform->position = walkmesh->to_world_point(rat.at);
-	rat.dir = glm::normalize(glm::vec2(0.0f, -1.0f));
+	for(int i=0;i<30;i++) {
+		Rat rat;
+		scene.transforms.emplace_back();
+		rat.transform = &scene.transforms.back();
+
+		Mesh const &mesh = phonebank_meshes->lookup("Rat");
+		scene.drawables.emplace_back(Scene::Drawable(rat.transform));
+		Scene::Drawable &drawable = scene.drawables.back();
+
+		drawable.pipeline = lit_color_texture_program_pipeline;
+		drawable.pipeline.vao = phonebank_meshes_for_lit_color_texture_program;
+		drawable.pipeline.type = mesh.type;
+		drawable.pipeline.start = mesh.start;
+		drawable.pipeline.count = mesh.count;
+
+		*rat.transform = *rat_transform;
+		rat.at = walkmesh->nearest_walk_point(rat.transform->position);
+		rat.transform->position = walkmesh->to_world_point(rat.at);
+		rat.dir = glm::vec2((std::rand() % 100 / 50.0f) - 1.0f, (std::rand() % 100 / 50.0f) - 1.0f);
+		glm::vec3 upDir = walkmesh->to_world_smooth_normal(rat.at);
+		float angle_radian = (rat.dir.y > 0) ? std::acos(rat.dir.x) : -std::acos(rat.dir.x);
+		rat.transform->rotation = glm::angleAxis(angle_radian, upDir) * rat.transform->rotation;
+		
+
+		rats.push_back(rat);
+	}
+	rat_transform->scale = glm::vec3(0.0f);
 }
 
 PlayMode::~PlayMode() {
@@ -240,8 +262,8 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 
-	//rat walking:
-	{
+	//rats walking:
+	for(Rat &rat: rats) {
 		//combine inputs into a move:
 		constexpr float RatSpeed = 5.0f;
 		glm::vec2 move = glm::vec2(0.0f, -1.0f);
@@ -309,7 +331,7 @@ void PlayMode::update(float elapsed) {
 				}
 
 				rat.dir = glm::vec2((std::rand() % 100 / 50.0f) - 1.0f, (std::rand() % 100 / 50.0f) - 1.0f);
-				glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
+				glm::vec3 upDir = walkmesh->to_world_smooth_normal(rat.at);
 				float angle_radian = (rat.dir.y > 0) ? std::acos(rat.dir.x) : -std::acos(rat.dir.x);
 				rat.transform->rotation = glm::angleAxis(angle_radian, upDir) * rat.transform->rotation;
 			}
