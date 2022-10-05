@@ -273,24 +273,16 @@ void PlayMode::update(float elapsed) {
 
 		//get move in world coordinate system:
 		glm::vec3 remain = rat.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-		printf("after make_local_to_world:\n");
-		printf("remain = %f,%f,%f\n", remain.x, remain.y,remain.z);
-		printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
-		printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
-
+		
 		//using a for() instead of a while() here so that if walkpoint gets stuck in
 		// some awkward case, code will not infinite loop:
 		for (uint32_t iter = 0; iter < 10; ++iter) {
 			if (remain == glm::vec3(0.0f)) {
-				printf("break here\n");
 				break;
 			}
 			WalkPoint end;
 			float time;
 			walkmesh->walk_in_triangle(rat.at, remain, &end, &time);
-			printf("after walk in triangle:\n");
-			printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
-			printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
 			rat.at = end;
 			assert(rat.at.indices.x < walkmesh->vertices.size());
 			if (time == 1.0f) {
@@ -303,9 +295,6 @@ void PlayMode::update(float elapsed) {
 			//try to step over edge:
 			glm::quat rotation;
 			if (walkmesh->cross_edge(rat.at, &end, &rotation)) {
-				printf("after cross edge:\n");
-				printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
-				printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
 				//stepped to a new triangle:
 				rat.at = end;
 				assert(rat.at.indices.x < walkmesh->vertices.size());
@@ -353,10 +342,7 @@ void PlayMode::update(float elapsed) {
 			);
 			rat.transform->rotation = glm::normalize(adjust * rat.transform->rotation);
 		}
-		printf("after to_world_smooth_normal:\n");
-		printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
-		printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
-
+		
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
 		glm::vec3 right = frame[0];
