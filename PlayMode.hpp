@@ -29,6 +29,14 @@ struct PlayMode : Mode {
 	Scene scene;
 
 	//player info:
+	struct Rat {
+		glm::vec2 dir;
+		WalkPoint at;
+		//transform is at player's feet and will be yawed by mouse left/right motion:
+		Scene::Transform *transform = nullptr;
+	} rat;
+
+	//player info:
 	struct Player {
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:

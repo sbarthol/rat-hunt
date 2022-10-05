@@ -50,6 +50,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
+	player.transform->rotation = glm::quat(0.0,0.0,0.0,1.0);
 
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -68,6 +69,18 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	// https://www.turbosquid.com/3d-models/maya-rat-games/611560#
+	for (auto &transform : scene.transforms) {
+		if (transform.name == "Rat") {
+			rat.transform = &transform;
+			printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
+			printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
+		}
+
+	}
+	rat.at = walkmesh->nearest_walk_point(rat.transform->position);
+	rat.transform->position = walkmesh->to_world_point(rat.at);
+	rat.dir = glm::normalize(glm::vec2(0.0f, -1.0f));
 }
 
 PlayMode::~PlayMode() {
@@ -216,6 +229,111 @@ void PlayMode::update(float elapsed) {
 			);
 			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
 		}
+
+		/*
+		glm::mat4x3 frame = camera->transform->make_local_to_parent();
+		glm::vec3 right = frame[0];
+		//glm::vec3 up = frame[1];
+		glm::vec3 forward = -frame[2];
+
+		camera->transform->position += move.x * right + move.y * forward;
+		*/
+	}
+
+	//rat walking:
+	{
+		//combine inputs into a move:
+		constexpr float RatSpeed = 5.0f;
+		glm::vec2 move = glm::vec2(0.0f, -1.0f);
+
+		//make it so that moving diagonally doesn't go faster:
+		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * RatSpeed * elapsed;
+
+		//get move in world coordinate system:
+		glm::vec3 remain = rat.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+		printf("after make_local_to_world:\n");
+		printf("remain = %f,%f,%f\n", remain.x, remain.y,remain.z);
+		printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
+		printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
+
+		//using a for() instead of a while() here so that if walkpoint gets stuck in
+		// some awkward case, code will not infinite loop:
+		for (uint32_t iter = 0; iter < 10; ++iter) {
+			if (remain == glm::vec3(0.0f)) {
+				printf("break here\n");
+				break;
+			}
+			WalkPoint end;
+			float time;
+			walkmesh->walk_in_triangle(rat.at, remain, &end, &time);
+			printf("after walk in triangle:\n");
+			printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
+			printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
+			rat.at = end;
+			assert(rat.at.indices.x < walkmesh->vertices.size());
+			if (time == 1.0f) {
+				//finished within triangle:
+				remain = glm::vec3(0.0f);
+				break;
+			}
+			//some step remains:
+			remain *= (1.0f - time);
+			//try to step over edge:
+			glm::quat rotation;
+			if (walkmesh->cross_edge(rat.at, &end, &rotation)) {
+				printf("after cross edge:\n");
+				printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
+				printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
+				//stepped to a new triangle:
+				rat.at = end;
+				assert(rat.at.indices.x < walkmesh->vertices.size());
+				//rotate step to follow surface:
+				remain = rotation * remain;
+			} else {
+				//ran into a wall, bounce / slide along it:
+				glm::vec3 const &a = walkmesh->vertices[rat.at.indices.x];
+				glm::vec3 const &b = walkmesh->vertices[rat.at.indices.y];
+				glm::vec3 const &c = walkmesh->vertices[rat.at.indices.z];
+				glm::vec3 along = glm::normalize(b-a);
+				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+				glm::vec3 in = glm::cross(normal, along);
+
+				//check how much 'remain' is pointing out of the triangle:
+				float d = glm::dot(remain, in);
+				if (d < 0.0f) {
+					//bounce off of the wall:
+					remain += (-1.25f * d) * in;
+				} else {
+					//if it's just pointing along the edge, bend slightly away from wall:
+					remain += 0.01f * d * in;
+				}
+
+				rat.dir = glm::vec2((std::rand() % 100 / 50.0f) - 1.0f, (std::rand() % 100 / 50.0f) - 1.0f);
+				glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
+				float angle_radian = (rat.dir.y > 0) ? std::acos(rat.dir.x) : -std::acos(rat.dir.x);
+				rat.transform->rotation = glm::angleAxis(angle_radian, upDir) * rat.transform->rotation;
+			}
+		}
+
+		if (remain != glm::vec3(0.0f)) {
+			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+		}
+
+		//update rat's position to respect walking:
+		assert(rat.at.indices.x < walkmesh->vertices.size());
+		rat.transform->position = walkmesh->to_world_point(rat.at);
+
+		{ //update player's rotation to respect local (smooth) up-vector:
+			
+			glm::quat adjust = glm::rotation(
+				rat.transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
+				walkmesh->to_world_smooth_normal(rat.at) //smoothed up vector at walk location
+			);
+			rat.transform->rotation = glm::normalize(adjust * rat.transform->rotation);
+		}
+		printf("after to_world_smooth_normal:\n");
+		printf("rat.pos = (%f,%f,%f)\n", rat.transform->position.x,rat.transform->position.y,rat.transform->position.z);
+		printf("rat.rot = (%f,%f,%f,%f)\n", rat.transform->rotation.w,rat.transform->rotation.x,rat.transform->rotation.y,rat.transform->rotation.z);
 
 		/*
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
