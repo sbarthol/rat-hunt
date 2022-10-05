@@ -1,8 +1,8 @@
-# (TODO: your game's title)
+# Rat Hunt
 
-Author: (TODO: your name)
+Author: Sacha Bartholme
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: Oh Oh. After you return from the fall break, you discover a rodent infestation in your apartment. Can you catch all the rats?
 
 Screen Shot:
 
@@ -10,9 +10,9 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+Use WASD to move the player and catch the rats.
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+- https://www.turbosquid.com/3d-models/maya-rat-games/611560#
 
 This game was built with [NEST](NEST.md).
 

@@ -39,8 +39,6 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	// Used the following assets
-	// https://www.blenderkit.com/get-blenderkit/116e9087-3375-46a3-9062-e3b932993560/
 	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
@@ -351,6 +349,13 @@ void PlayMode::update(float elapsed) {
 
 		camera->transform->position += move.x * right + move.y * forward;
 		*/
+	}
+
+	// remove some rats
+	for(Rat &rat: rats) {
+		if(glm::distance2(rat.transform->position, player.transform->position) < 1.0) {
+			rat.transform->scale = glm::vec3(0.0f);
+		}
 	}
 
 	//reset button press counters:
